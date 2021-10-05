@@ -27,7 +27,7 @@ class Message {
     return result.rows[0];
   }
 
-  /** Update read_at for message */
+  /** Update read_at for message. Returns { id, read_at }*/
 
   static async markRead(id) {
     const result = await db.query(
