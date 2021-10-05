@@ -2,6 +2,8 @@
 
 const Router = require("express").Router;
 const router = new Router();
+const { ensureLoggedIn } = require("../middleware/auth");
+const { UnauthorizedError } = require("../expressError");
 
 /** GET /:id - get detail of message.
  *
@@ -15,6 +17,17 @@ const router = new Router();
  * Makes sure that the currently-logged-in users is either the to or from user.
  *
  **/
+
+router.get("/:id", ensureLoggedIn, async function (res, req) {
+  const id = req.params.id;
+  const message = Messages.get(id);
+
+  if (res.local.user.username !== message.from_user && res.local.user.username !== message.to_user) {
+    throw new UnauthorizedError("YOU CAN'T SEE THIS!");
+  }
+
+  return { message };
+});
 
 
 /** POST / - post message.

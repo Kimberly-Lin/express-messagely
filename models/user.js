@@ -56,8 +56,8 @@ class User {
         RETURNING username, last_login_at`,
       [username]);
 
-      console.assert(result.rows[0], "No user found");
- 
+    console.assert(result.rows[0], "No user found");
+
   }
 
   /** All: basic info on all users:
@@ -90,10 +90,10 @@ class User {
               join_at, 
               last_login_at
       FROM users
-      WHERE username = $1`, 
+      WHERE username = $1`,
       [username]
     );
-    
+
     const user = result.rows[0];
 
     if (!user) {
@@ -111,25 +111,44 @@ class User {
    */
 
   static async messagesFrom(username) {
+
     const messageResults = await db.query(
-      `SELECT id
-      FROM messages
-      WHERE from_username = $1
-      ORDER BY id`, [username]
+      `SELECT m.id,
+              m.to_username,
+              t.first_name AS to_first_name,
+              t.last_name AS to_last_name,
+              t.phone AS to_phone,
+              m.body,
+              m.sent_at,
+              m.read_at
+      FROM messages AS m
+              JOIN users AS f ON m.from_username = f.username
+              JOIN users AS t ON m.to_username = t.username
+      WHERE m.from_username = $1`, [username]
     );
-    
+
     const messages = messageResults.rows;
 
     if (!messages[0]) {
-      throw new NotFoundError(); // customize the message here 
+      throw new NotFoundError("Messages could not be found for this user");
     }
 
-    const messagesWithRecipientInfo = messages.map(async message => {
-      let { id, to_user, body, sent_at, read_at } = await Message.get(message.id);
-      return { id, to_user, body, sent_at, read_at };
+    const result = messages.map(m => {
+      return {
+        id: m.id,
+        to_user: {
+          username: m.to_username,
+          first_name: m.to_first_name,
+          last_name: m.to_last_name,
+          phone: m.to_phone,
+        },
+        body: m.body,
+        sent_at: m.sent_at,
+        read_at: m.read_at,
+      }
     });
-    
-    return await (Promise.all(messagesWithRecipientInfo));
+
+    return result;
   }
 
   /** Return messages to this user.
@@ -142,29 +161,42 @@ class User {
 
   static async messagesTo(username) { // update format to match above
     const messageResults = await db.query(
-      `SELECT id
-      FROM messages
-      WHERE to_username = $1
-      ORDER BY id`, [username]
+      `SELECT m.id,
+              m.from_username,
+              f.first_name AS from_first_name,
+              f.last_name AS from_last_name,
+              f.phone AS from_phone,
+              m.body,
+              m.sent_at,
+              m.read_at
+      FROM messages AS m
+              JOIN users AS f ON m.from_username = f.username
+              JOIN users AS t ON m.to_username = t.username
+      WHERE m.to_username = $1`, [username]
     );
-    
+
     const messages = messageResults.rows;
 
     if (!messages[0]) {
       throw new NotFoundError();
     }
 
-    const messagesWithRecipientInfo = messages.map(async message => {
-      let messageInfo = await Message.get(message.id);
-      return { id : messageInfo.id, 
-                from_user : messageInfo.from_user, 
-                body : messageInfo.body,
-                sent_at : messageInfo.sent_at, 
-                read_at : messageInfo.read_at,
-                }
+    const result = messages.map(m => {
+      return {
+        id: m.id,
+        from_user: {
+          username: m.from_username,
+          first_name: m.from_first_name,
+          last_name: m.from_last_name,
+          phone: m.from_phone,
+        },
+        body: m.body,
+        sent_at: m.sent_at,
+        read_at: m.read_at,
+      }
     });
 
-    return await (Promise.all(messagesWithRecipientInfo));
+    return result;
   }
 }
 

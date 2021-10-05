@@ -5,14 +5,14 @@ const router = new Router();
 const JWT = require("jsonwebtoken");
 const User = require("../models/user");
 const { SECRET_KEY } = require("../config");
-const { BadRequestError } = require("../expressError");
+const { NotFoundError } = require("../expressError");
 
 /** POST /login: {username, password} => {token} */
 router.post("/login", async function (req, res) {
   const { username, password } = req.body;
   const authenticated = await User.authenticate(username, password);
 
-  if (!authenticated) throw new BadRequestError("invalid login credentials");
+  if (!authenticated) throw new NotFoundError("invalid login credentials");
 
   User.updateLoginTimestamp(username);
   const token = JWT.sign({ username }, SECRET_KEY);

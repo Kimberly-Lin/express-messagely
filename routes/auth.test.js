@@ -64,14 +64,14 @@ describe("Auth Routes Test", function () {
       let response = await request(app)
         .post("/auth/login")
         .send({ username: "test1", password: "WRONG" });
-      expect(response.statusCode).toEqual(400);
+      expect(response.statusCode).toEqual(401);
     });
 
     test("won't login w/wrong password", async function () {
       let response = await request(app)
         .post("/auth/login")
         .send({ username: "not-user", password: "password" });
-      expect(response.statusCode).toEqual(400);
+      expect(response.statusCode).toEqual(401);
     });
   });
 });
