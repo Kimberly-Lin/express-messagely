@@ -56,7 +56,8 @@ class User {
         RETURNING username, last_login_at`,
       [username]);
 
-    console.log(result.rows[0])
+      console.assert(result.rows[0], "No user found");
+ 
   }
 
   /** All: basic info on all users:
@@ -68,8 +69,7 @@ class User {
         FROM users
         ORDER BY last_name, first_name`
     )
-    const users = result.rows;
-    return users;
+    return result.rows;
   }
 
   /** Get: get user by username
@@ -121,19 +121,14 @@ class User {
     const messages = messageResults.rows;
 
     if (!messages[0]) {
-      throw new NotFoundError();
+      throw new NotFoundError(); // customize the message here 
     }
 
     const messagesWithRecipientInfo = messages.map(async message => {
-      let messageInfo = await Message.get(message.id);
-      return { id : messageInfo.id, 
-                to_user : messageInfo.to_user, 
-                body : messageInfo.body,
-                sent_at : messageInfo.sent_at, 
-                read_at : messageInfo.read_at,
-                }
+      let { id, to_user, body, sent_at, read_at } = await Message.get(message.id);
+      return { id, to_user, body, sent_at, read_at };
     });
-
+    
     return await (Promise.all(messagesWithRecipientInfo));
   }
 
@@ -145,7 +140,7 @@ class User {
    *   {id, first_name, last_name, phone}
    */
 
-  static async messagesTo(username) {
+  static async messagesTo(username) { // update format to match above
     const messageResults = await db.query(
       `SELECT id
       FROM messages

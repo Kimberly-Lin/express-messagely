@@ -14,9 +14,10 @@ router.post("/login", async function (req, res) {
 
   if (!authenticated) throw new BadRequestError("invalid login credentials");
 
+  User.updateLoginTimestamp(username);
   const token = JWT.sign({ username }, SECRET_KEY);
   return res.json({ token });
-})
+});
 
 /** POST /register: registers, logs in, and returns token.
  *
@@ -27,7 +28,7 @@ router.post("/register", async function (req, res) {
   await User.register({ username, password, first_name, last_name, phone });
   const token = JWT.sign({ username }, SECRET_KEY);
   return res.json({ token });
-})
+});
 
 
 module.exports = router;
